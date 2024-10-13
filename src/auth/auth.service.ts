@@ -48,7 +48,10 @@ export class AuthService {
   }
 
   async login(user: User, response: Response) {
+    // Create a date when the JWT  Access Token expires
     const dateWhenJwtAccessTokenExpires = new Date();
+
+    // Set the expiration time to the values from the config
     dateWhenJwtAccessTokenExpires.setMilliseconds(
       dateWhenJwtAccessTokenExpires.getMilliseconds() +
         parseInt(
@@ -74,6 +77,8 @@ export class AuthService {
     const tokenPayload: TokenPayload = {
       userId: user.id,
     };
+
+    console.log("xx token payload", tokenPayload);
 
     // 1. Create a JWT Access Token
     const accessToken = this.jwtService.sign(tokenPayload, {
@@ -111,6 +116,8 @@ export class AuthService {
       secure: this.configService.get("NODE_ENV") === "production",
       expires: dateWhenJwtRefreshTokenExpires,
     });
-    // return { tokenPayload };
+
+    console.log("xx beide cookies gesetzt");
+    return { tokenPayload };
   }
 }

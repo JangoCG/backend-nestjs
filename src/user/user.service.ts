@@ -46,4 +46,15 @@ export class UserService {
       data,
     });
   }
+
+  async getOrCreateUser(data: CreateUserRequestDto) {
+    console.log("xx get or create user", data);
+    const user = await this.getUser({ email: data.email });
+
+    if (user) {
+      return user;
+    } else {
+      return this.createUser(data);
+    }
+  }
 }

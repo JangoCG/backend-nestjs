@@ -1,10 +1,11 @@
-import { Controller, Post, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Post, Res, UseGuards } from "@nestjs/common";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
 import { CurrentUser } from "./current-user.decorator";
 import { User } from "@prisma/client";
 import { AuthService } from "./auth.service";
 import { Response } from "express";
 import { JwtRefreshAuthGuard } from "./guards/jwt-refresh-auth.guard";
+import { GoogleAuthGuard } from "./guards/google-auth.guard";
 
 @Controller("auth")
 export class AuthController {
@@ -28,5 +29,21 @@ export class AuthController {
   ) {
     console.log("xx refresh", user);
     return this.authService.login(user, response);
+  }
+
+  @Get("google")
+  @UseGuards(GoogleAuthGuard)
+  loginWithGoogle() {
+    // Guard will handle the redirect. no need to implement this
+  }
+
+  @Get("/google/callback")
+  @UseGuards(GoogleAuthGuard)
+  async googleCallback(
+    @CurrentUser() user: User,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    console.log("xx test");
+    await this.authService.login(user, response);
   }
 }
