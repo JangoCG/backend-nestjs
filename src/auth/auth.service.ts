@@ -24,8 +24,10 @@ export class AuthService {
         throw new UnauthorizedException("Invalid credentials");
       }
       return user;
-    } catch (err) {}
-    throw new UnauthorizedException("Invalid credentials");
+    } catch (err) {
+      console.log(err);
+      throw new UnauthorizedException("Invalid credentials");
+    }
   }
 
   async verifyRefreshToken(refreshToken: string, userId: number) {
@@ -47,7 +49,15 @@ export class AuthService {
     }
   }
 
-  async login(user: User, response: Response) {
+  /**
+   * Logs in the user by setting the JWT Access Token and the JWT Refresh Token as cookies
+   * @param user The user to log in
+   * @param response The response object to set the cookies
+   * @param redirect If true, the user will be redirected to the frontend URL. This is only needed for OAuth logins.
+   * The OAuth provider will redirect the user to the backend, after that redirect from the OAuth Provider the backend
+   * then needs to redirect back to the frontend.
+   */
+  async login(user: User, response: Response, redirect = false) {
     // Create a date when the JWT  Access Token expires
     const dateWhenJwtAccessTokenExpires = new Date();
 
@@ -117,7 +127,8 @@ export class AuthService {
       expires: dateWhenJwtRefreshTokenExpires,
     });
 
-    console.log("xx beide cookies gesetzt");
-    return { tokenPayload };
+    if (redirect) {
+      response.redirect(this.configService.getOrThrow("FRONTEND_URL"));
+    }
   }
 }
