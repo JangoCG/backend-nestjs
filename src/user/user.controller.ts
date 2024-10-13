@@ -1,11 +1,11 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { CreateUserRequestDto } from './dto/create-user-request.dto';
-import { UserService } from './user.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../auth/current-user.decorator';
-import { User } from '@prisma/client';
+import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { CreateUserRequestDto } from "./dto/create-user-request.dto";
+import { UserService } from "./user.service";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { CurrentUser } from "../auth/current-user.decorator";
+import { User } from "@prisma/client";
 
-@Controller('users')
+@Controller("users")
 export class UserController {
   constructor(private userService: UserService) {}
 
@@ -14,7 +14,7 @@ export class UserController {
     return this.userService.createUser(request);
   }
 
-  @Get('/me')
+  @Get("/me")
   @UseGuards(JwtAuthGuard)
   getMe(@CurrentUser() user: User) {
     return user;
