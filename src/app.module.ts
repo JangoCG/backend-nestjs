@@ -1,29 +1,30 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UserModule } from './user/user.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { LoggerModule } from 'nestjs-pino';
-import { AuthModule } from './auth/auth.module';
+import { Module } from "@nestjs/common";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
+import { UserModule } from "./user/user.module";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { LoggerModule } from "nestjs-pino";
+import { AuthModule } from "./auth/auth.module";
+import { ProductModule } from "./product/product.module";
 
 @Module({
   imports: [
     LoggerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => {
-        const isProduction = configService.get('NODE_ENV') === 'production';
+        const isProduction = configService.get("NODE_ENV") === "production";
 
         return {
           pinoHttp: {
             transport: isProduction
               ? undefined
               : {
-                  target: 'pino-pretty',
+                  target: "pino-pretty",
                   options: {
                     singleLine: true,
                   },
                 },
-            level: isProduction ? 'info' : 'debug',
+            level: isProduction ? "info" : "debug",
           },
         };
       },
@@ -32,6 +33,7 @@ import { AuthModule } from './auth/auth.module';
     UserModule,
     ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
+    ProductModule,
   ],
   controllers: [AppController],
   providers: [AppService],
