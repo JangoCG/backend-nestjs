@@ -1,8 +1,8 @@
-import { Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { CreateUserRequestDto } from './dto/create-user-request.dto';
-import { PrismaService } from '../prisma/prisma.service';
-import { Prisma, User } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { Injectable, UnprocessableEntityException } from "@nestjs/common";
+import { CreateUserRequestDto } from "./dto/create-user-request.dto";
+import { PrismaService } from "../prisma/prisma.service";
+import { Prisma, User } from "@prisma/client";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class UserService {
@@ -23,8 +23,8 @@ export class UserService {
       });
     } catch (err) {
       // eig keine best practise
-      if (err.code === 'P2002') {
-        throw new UnprocessableEntityException('Email already exists');
+      if (err.code === "P2002") {
+        throw new UnprocessableEntityException("Email already exists");
       }
 
       throw err;
@@ -34,6 +34,16 @@ export class UserService {
   async getUser(filter: Prisma.UserWhereUniqueInput): Promise<User | null> {
     return this.prismaService.user.findUnique({
       where: filter,
+    });
+  }
+
+  async updateUser(
+    filter: Prisma.UserWhereUniqueInput,
+    data: Prisma.UserUpdateInput,
+  ): Promise<User | null> {
+    return this.prismaService.user.update({
+      where: filter,
+      data,
     });
   }
 }

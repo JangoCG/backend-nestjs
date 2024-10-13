@@ -6,6 +6,7 @@ import { ConfigService } from "@nestjs/config";
 import { TokenPayload } from "./token-payload.interface";
 import { JwtService } from "@nestjs/jwt";
 import { Response } from "express";
+import { hash } from "bcrypt";
 
 @Injectable()
 export class AuthService {
@@ -27,13 +28,23 @@ export class AuthService {
     throw new UnauthorizedException("Invalid credentials");
   }
 
-  login(user: User, response: Response) {
-    const timeWhenJwtTokenExpires = new Date();
-    timeWhenJwtTokenExpires.setMilliseconds(
-      timeWhenJwtTokenExpires.getMilliseconds() +
+  async login(user: User, response: Response) {
+    const dateWhenJwtAccessTokenExpires = new Date();
+    dateWhenJwtAccessTokenExpires.setMilliseconds(
+      dateWhenJwtAccessTokenExpires.getMilliseconds() +
         parseInt(
           this.configService.getOrThrow<string>(
             "JWT_ACCESS_TOKEN_EXPIRATION_MS",
+          ),
+        ),
+    );
+
+    const dateWhenJwtRefreshTokenExpires = new Date();
+    dateWhenJwtAccessTokenExpires.setMilliseconds(
+      dateWhenJwtAccessTokenExpires.getMilliseconds() +
+        parseInt(
+          this.configService.getOrThrow<string>(
+            "JWT_REFRESH_TOKEN_EXPIRATION_MS",
           ),
         ),
     );
@@ -47,15 +58,37 @@ export class AuthService {
       secret: this.configService.getOrThrow<string>("JWT_ACCESS_TOKEN_SECRET"),
       expiresIn: `${this.configService.getOrThrow<string>(
         "JWT_ACCESS_TOKEN_EXPIRATION_MS",
-      )}ms`, // this uses the MS libary under the hood so we need to postfixed it with ms
+      )}ms`, // this uses the MS library under the hood so we need to postfix it with ms
     });
 
-    // 2. Set the JWT Access Token as a cookie. Use the same expiration time as the token
+    // 2. Create a JWT Refresh Token
+    const refreshToken = this.jwtService.sign(tokenPayload, {
+      secret: this.configService.getOrThrow<string>("JWT_REFRESH_TOKEN_SECRET"),
+      expiresIn: `${this.configService.getOrThrow<string>(
+        "JWT_REFRESH_TOKEN_EXPIRATION_MS",
+      )}ms`,
+    });
+
+    // 3. Save the Refresh Token in the database, so we can revoke it anytime (aka rotate his refresh token), when e.g. his account is compromised
+    // So a hacked user cannot be logged in forever
+    await this.userService.updateUser(
+      { id: user.id },
+      { refreshToken: await hash(refreshToken, 10) },
+    );
+
+    // 4. Set the JWT Access Token as a cookie. Use the same expiration time as the token
     response.cookie("Authentication", accessToken, {
       secure: true,
       httpOnly: this.configService.get("NODE_ENV") === "production",
-      expires: timeWhenJwtTokenExpires,
+      expires: dateWhenJwtAccessTokenExpires,
     });
-    return { tokenPayload };
+
+    // 5. Set the JWT Refresh Token as a cookie as well. Use the same expiration time as the token
+    response.cookie("Refresh", refreshToken, {
+      secure: true,
+      httpOnly: this.configService.get("NODE_ENV") === "production",
+      expires: dateWhenJwtRefreshTokenExpires,
+    });
+    // return { tokenPayload };
   }
 }
