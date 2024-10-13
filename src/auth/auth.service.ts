@@ -28,6 +28,25 @@ export class AuthService {
     throw new UnauthorizedException("Invalid credentials");
   }
 
+  async verifyRefreshToken(refreshToken: string, userId: number) {
+    try {
+      const user = await this.userService.getUser({ id: userId });
+      console.log("XX user ist", user);
+      const isRefreshTokenValid = await bcrypt.compare(
+        refreshToken,
+        user.refreshToken,
+      );
+
+      if (!isRefreshTokenValid) {
+        throw new UnauthorizedException("Invalid refresh token");
+      }
+      return user;
+    } catch (err) {
+      console.log("xx im catch", err);
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+  }
+
   async login(user: User, response: Response) {
     const dateWhenJwtAccessTokenExpires = new Date();
     dateWhenJwtAccessTokenExpires.setMilliseconds(
@@ -39,9 +58,12 @@ export class AuthService {
         ),
     );
 
+    // Create a date when the JWT Refresh Token expires
     const dateWhenJwtRefreshTokenExpires = new Date();
-    dateWhenJwtAccessTokenExpires.setMilliseconds(
-      dateWhenJwtAccessTokenExpires.getMilliseconds() +
+
+    // Add the expiration time to the the values from the config
+    dateWhenJwtRefreshTokenExpires.setMilliseconds(
+      dateWhenJwtRefreshTokenExpires.getMilliseconds() +
         parseInt(
           this.configService.getOrThrow<string>(
             "JWT_REFRESH_TOKEN_EXPIRATION_MS",
@@ -78,15 +100,15 @@ export class AuthService {
 
     // 4. Set the JWT Access Token as a cookie. Use the same expiration time as the token
     response.cookie("Authentication", accessToken, {
-      secure: true,
-      httpOnly: this.configService.get("NODE_ENV") === "production",
+      httpOnly: true,
+      secure: this.configService.get("NODE_ENV") === "production",
       expires: dateWhenJwtAccessTokenExpires,
     });
 
     // 5. Set the JWT Refresh Token as a cookie as well. Use the same expiration time as the token
     response.cookie("Refresh", refreshToken, {
-      secure: true,
-      httpOnly: this.configService.get("NODE_ENV") === "production",
+      httpOnly: true,
+      secure: this.configService.get("NODE_ENV") === "production",
       expires: dateWhenJwtRefreshTokenExpires,
     });
     // return { tokenPayload };
