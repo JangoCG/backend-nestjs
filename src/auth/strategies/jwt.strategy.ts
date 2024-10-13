@@ -21,6 +21,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       ]),
     });
   }
+
+  /**
+   * This method is called when the user is authenticated. If we can find a user
+   * with the userId from the Access Token, we consider the user authenticated
+   * @param payload The payload of the JWT Access Token
+   */
   validate(payload: TokenPayload) {
     return this.userService.getUser({ id: payload.userId });
   }

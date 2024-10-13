@@ -8,6 +8,10 @@ import * as bcrypt from "bcrypt";
 export class UserService {
   constructor(private prismaService: PrismaService) {}
 
+  /**
+   * Creates a new user
+   * @param request
+   */
   async createUser(request: CreateUserRequestDto) {
     try {
       return await this.prismaService.user.create({
@@ -15,28 +19,36 @@ export class UserService {
           email: request.email,
           password: await bcrypt.hash(request.password, 10),
         },
-        // just return email and id
+        // just return email and id (so the response will not contain the password)
         select: {
           email: true,
           id: true,
         },
       });
     } catch (err) {
-      // eig keine best practise
+      // TODO: We should not expose this information
       if (err.code === "P2002") {
         throw new UnprocessableEntityException("Email already exists");
       }
-
       throw err;
     }
   }
 
+  /**
+   * Gets a user by the filter
+   * @param filter The filter to find the user
+   */
   async getUser(filter: Prisma.UserWhereUniqueInput): Promise<User | null> {
     return this.prismaService.user.findUnique({
       where: filter,
     });
   }
 
+  /**
+   * Updates a user
+   * @param filter The filter to find the user
+   * @param data The data to update
+   */
   async updateUser(
     filter: Prisma.UserWhereUniqueInput,
     data: Prisma.UserUpdateInput,
@@ -47,8 +59,11 @@ export class UserService {
     });
   }
 
+  /**
+   * Gets or creates a user
+   * @param data The data to create the user
+   */
   async getOrCreateUser(data: CreateUserRequestDto) {
-    console.log("xx get or create user", data);
     const user = await this.getUser({ email: data.email });
 
     if (user) {

@@ -16,6 +16,11 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
+  /**
+   * Verifies the user by checking if the email and password match
+   * @param email The email of the user
+   * @param password The password of the user
+   */
   async verifyUser(email: string, password: string) {
     try {
       const user = await this.userService.getUser({ email });
@@ -30,10 +35,14 @@ export class AuthService {
     }
   }
 
+  /**
+   * Verifies the refresh token by checking if the refresh token in the database matches the one in the request
+   * @param refreshToken
+   * @param userId
+   */
   async verifyRefreshToken(refreshToken: string, userId: number) {
     try {
       const user = await this.userService.getUser({ id: userId });
-      console.log("XX user ist", user);
       const isRefreshTokenValid = await bcrypt.compare(
         refreshToken,
         user.refreshToken,

@@ -18,16 +18,18 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     });
   }
 
+  /**
+   * This method is called when the user is redirected from the OAuth provider
+   * @param accessToken The access token provided by the OAuth provider. We actually don't care about this, as we will create our own access token
+   * @param refreshToken The refresh token provided by the OAuth provider. We don't care about this either, as we will create our own refresh token
+   * @param profile The profile provided by the OAuth provider. This is actually the information we care about. It contains the user's email and other information
+   */
   async validate(accessToken: string, refreshToken: string, profile: any) {
-    console.log("xx im validate");
-    console.log("xx profile", profile);
-    const foundOrCreatedUser = await this.userService.getOrCreateUser({
+    return this.userService.getOrCreateUser({
       email: profile.emails[0].value,
       // users created with a social provider will have an empty password to
       // indicate that they were created with a social provider
       password: "",
     });
-    console.log("xx found or created user", foundOrCreatedUser);
-    return foundOrCreatedUser;
   }
 }
