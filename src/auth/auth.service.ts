@@ -140,4 +140,8 @@ export class AuthService {
       response.redirect(this.configService.getOrThrow("FRONTEND_URL"));
     }
   }
+
+  verifyToken(token: string) {
+    return this.jwtService.verify(token);
+  }
 }

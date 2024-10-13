@@ -12,6 +12,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "prettier": "npx prettier . --write",
     "migrate:dev": "npx prisma migrate dev",
     "db:push": "npx prisma db push",
     "prisma:generate": "npx prisma generate",
