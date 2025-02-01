@@ -10,7 +10,9 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
   app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-  await app.listen(app.get(ConfigService).getOrThrow("PORT"));
+  const port = app.get(ConfigService).getOrThrow("PORT");
+  await app.listen(port);
+  app.get(Logger).log(`Server is running on port ${port}`);
 }
 
 bootstrap();
