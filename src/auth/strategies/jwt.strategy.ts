@@ -5,39 +5,68 @@ import { Request } from "express";
 import { ConfigService } from "@nestjs/config";
 import { TokenPayload } from "../token-payload.interface";
 import { UserService } from "../../user/user.service";
+import { User } from "@prisma/client";
 
+/**
+ * JWT authentication strategy for Passport.js implementation in NestJS.
+ * Extracts and validates JWT tokens from either HTTP cookies or Authorization header.
+ */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  /**
+   * Creates an instance of JwtStrategy.
+   * Configures the strategy with JWT secret and token extraction methods.
+   *
+   * @param {ConfigService} configService - NestJS config service for accessing environment variables
+   * @param {UserService} userService - Service for user-related operations
+   * @throws {Error} If JWT_ACCESS_TOKEN_SECRET is not found in environment variables
+   */
   constructor(
     private configService: ConfigService,
     private userService: UserService,
   ) {
     super({
       /**
-       * This is the secret key for the JWT Access Token.
-       * It is used to sign the JWT Access Token.
+       * Secret key used for verifying the JWT signature.
+       * Retrieved from environment variables.
        */
       secretOrKey: configService.getOrThrow("JWT_ACCESS_TOKEN_SECRET"),
+
       /**
-       * This is the function that extracts the JWT Access Token from the request.
-       * It is used to extract the JWT Access Token from the request cookies and from the Authorization header (bearer token).
-       * It will first check the cookies for the JWT Access Token and then check the Authorization header (bearer token) for the JWT Access Token.
+       * JWT token extraction configuration.
+       * Attempts to extract the token in the following order:
+       * 1. From the 'Authentication' cookie
+       * 2. From the Authorization header as a Bearer token
+       *
+       * @example
+       * // Cookie format
+       * Authentication=<jwt_token>
+       *
+       * // Authorization header format
+       * Authorization: Bearer <jwt_token>
        */
       jwtFromRequest: ExtractJwt.fromExtractors([
-        // First check cookie
         (req: Request) => req?.cookies?.Authentication,
-        // Then check bearer token
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
     });
   }
 
   /**
-   * This method is called when the user is authenticated. If we can find a user
-   * with the userId from the Access Token, we consider the user authenticated
-   * @param payload The payload of the JWT Access Token
+   * Validates the JWT payload and retrieves the corresponding user.
+   * Called by Passport.js after token is verified.
+   *
+   * @param {TokenPayload} payload - Decoded JWT token payload containing user information
+   * @returns {Promise<User>} Promise resolving to the authenticated user
+   *
+   * @example
+   * // Example payload structure
+   * {
+   *   userId: "123",
+   *   // ... other payload properties
+   * }
    */
-  validate(payload: TokenPayload) {
+  async validate(payload: TokenPayload): Promise<User> {
     return this.userService.getUser({ id: payload.userId });
   }
 }
