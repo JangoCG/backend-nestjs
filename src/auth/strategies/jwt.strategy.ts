@@ -13,11 +13,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private userService: UserService,
   ) {
     super({
+      /**
+       * This is the secret key for the JWT Access Token.
+       * It is used to sign the JWT Access Token.
+       */
       secretOrKey: configService.getOrThrow("JWT_ACCESS_TOKEN_SECRET"),
+      /**
+       * This is the function that extracts the JWT Access Token from the request.
+       * It is used to extract the JWT Access Token from the request cookies and from the Authorization header (bearer token).
+       * It will first check the cookies for the JWT Access Token and then check the Authorization header (bearer token) for the JWT Access Token.
+       */
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (req: Request) => {
-          return req?.cookies?.Authentication;
-        },
+        // First check cookie
+        (req: Request) => req?.cookies?.Authentication,
+        // Then check bearer token
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
     });
   }
